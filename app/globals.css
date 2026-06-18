@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream-100 text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    @apply bg-lavender-200 text-lavender-900;
+  }
+}
+
+@layer components {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  /* Stagger helper for fade-up reveals */
+  .reveal {
+    @apply animate-fade-up;
+  }
+  .reveal-1 {
+    animation-delay: 0.05s;
+  }
+  .reveal-2 {
+    animation-delay: 0.12s;
+  }
+  .reveal-3 {
+    animation-delay: 0.2s;
+  }
+  .reveal-4 {
+    animation-delay: 0.28s;
+  }
+}
+
+/* Soft custom scrollbar for in-app scroll regions */
+.soft-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.soft-scroll::-webkit-scrollbar-thumb {
+  background: rgba(168, 146, 216, 0.35);
+  border-radius: 999px;
+}
+.soft-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
