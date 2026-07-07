@@ -1,7 +1,8 @@
 import { Card, CardEyebrow } from "@/components/ui/Card";
 import type { SuggestedAction } from "@/lib/types";
+import type { ReactElement } from "react";
 
-const icons: Record<SuggestedAction["key"], JSX.Element> = {
+const icons: Record<SuggestedAction["key"], ReactElement> = {
   reply: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
       <path d="M9 17l-5-5 5-5M4 12h11a4 4 0 0 1 4 4v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

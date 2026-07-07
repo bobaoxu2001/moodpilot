@@ -16,16 +16,16 @@ export function ReplyStudio({
   tone: ToneKey;
   onToneChange: (t: ToneKey) => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const draft = replies[tone];
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(draft.text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 1800);
     } catch {
-      setCopied(false);
+      setCopyStatus("failed");
     }
   };
 
@@ -85,7 +85,7 @@ export function ReplyStudio({
 
       <div className="mt-5 flex items-center gap-3">
         <Button variant="primary" size="sm" onClick={copy}>
-          {copied ? (
+          {copyStatus === "copied" ? (
             <>
               <CheckIcon /> Copied
             </>
@@ -95,10 +95,18 @@ export function ReplyStudio({
             </>
           )}
         </Button>
+        <span className="sr-only" role="status" aria-live="polite">
+          {copyStatus === "copied" ? "Draft copied." : copyStatus === "failed" ? "Copy failed. Select the draft text manually." : ""}
+        </span>
         <span className="text-xs text-ink-faint">
           You always send it yourself — MoodPilot never sends on your behalf.
         </span>
       </div>
+      {copyStatus === "failed" && (
+        <p className="mt-2 text-xs font-medium text-peach-600">
+          Copy was blocked. Select the draft text above and copy it manually.
+        </p>
+      )}
     </Card>
   );
 }

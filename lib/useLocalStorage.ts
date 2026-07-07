@@ -12,13 +12,14 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     try {
       const raw = window.localStorage.getItem(key);
       if (raw !== null) {
+        // Client-only hydration intentionally synchronizes the external storage snapshot.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setValue(JSON.parse(raw) as T);
       }
     } catch {
       // ignore malformed storage
     }
     setHydrated(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   const set = useCallback(
@@ -37,5 +38,14 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     [key]
   );
 
-  return { value, set, hydrated } as const;
+  const reset = useCallback(() => {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // storage may be unavailable
+    }
+    setValue(initialValue);
+  }, [initialValue, key]);
+
+  return { value, set, reset, hydrated } as const;
 }

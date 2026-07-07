@@ -35,13 +35,14 @@ export default function HistoryPage() {
     <div className="mx-auto max-w-4xl space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <CardEyebrow>Your library</CardEyebrow>
+          <CardEyebrow>{history.length ? "Your library" : "Demo library"}</CardEyebrow>
           <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-            Replies you&apos;ve crafted
+            {history.length ? "Replies you've crafted" : "Example replies"}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-soft">
-            Saved drafts stay local to this browser in the demo. They are here to
-            prove the product loop: useful replies can become reusable memory.
+            {history.length
+              ? "These drafts stay local to this browser."
+              : "These clearly labeled examples preview the history experience until you save a draft."}
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={clear} disabled={!history.length}>
@@ -80,7 +81,7 @@ export default function HistoryPage() {
 
       {hydrated && history.length === 0 && (
         <p className="text-center text-xs text-ink-faint">
-          Demo examples shown until you save a draft from the Companion page.
+          No user-created drafts are stored yet.
         </p>
       )}
     </div>

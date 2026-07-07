@@ -23,10 +23,16 @@ export interface AnalyzeResponse {
 
 const CRISIS_TERMS = [
   "kill myself",
+  "killing myself",
   "suicide",
+  "suicidal",
   "self harm",
+  "harm myself",
   "hurt myself",
   "end it all",
+  "do not want to live",
+  "don't want to live",
+  "want to die",
 ];
 
 export function analyzeMessage({
@@ -34,7 +40,7 @@ export function analyzeMessage({
   context,
 }: AnalyzeRequest): AnalyzeResponse {
   const text = message.trim();
-  const lower = text.toLowerCase();
+  const lower = text.toLowerCase().replace(/[‐‑‒–—-]/g, " ").replace(/\s+/g, " ");
   const crisis = CRISIS_TERMS.some((term) => lower.includes(term));
   const profile = chooseProfile(lower);
 
@@ -73,6 +79,12 @@ export function analyzeMessage({
     what_is_mocked:
       "This route is a deterministic structured-analysis demo. It exercises the real API contract without sending text to an external model.",
   };
+}
+
+export function hasCrisisFlag(response: Pick<AnalyzeResponse, "safety_flags">) {
+  return response.safety_flags.includes(
+    "crisis_language_detected_handoff_to_human_support"
+  );
 }
 
 function chooseProfile(lower: string) {

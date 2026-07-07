@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import type { SuggestedAction } from "@/lib/types";
 
@@ -19,16 +19,38 @@ export function ApprovalDialog({
   onCancel,
 }: {
   action: SuggestedAction | null;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
   useEffect(() => {
     if (!action) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    focusable?.[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
+      if (e.key === "Tab" && focusable?.length) {
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previousFocus?.focus();
+    };
   }, [action, onCancel]);
 
   if (!action) return null;
@@ -38,23 +60,24 @@ export function ApprovalDialog({
       className="fixed inset-0 z-50 grid place-items-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={`Approve action: ${action.label}`}
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
     >
       <div
         className="absolute inset-0 bg-lavender-900/30 backdrop-blur-sm"
         onClick={onCancel}
       />
-      <div className="reveal relative w-full max-w-md rounded-4xl border border-white/70 bg-white p-7 shadow-lift">
+      <div ref={dialogRef} className="reveal relative w-full max-w-md rounded-4xl border border-white/70 bg-white p-7 shadow-lift">
         <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-lavender-100 text-lavender-600">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
           </svg>
         </div>
-        <h3 className="font-serif text-xl font-semibold text-ink">
+        <h3 id={titleId} className="font-serif text-xl font-semibold text-ink">
           Approve: {action.label}?
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+        <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-ink-soft">
           {previewCopy[action.key]}
         </p>
         <p className="mt-3 rounded-2xl bg-cream-100 px-3.5 py-2.5 text-xs text-ink-soft">
@@ -65,7 +88,7 @@ export function ApprovalDialog({
           <Button variant="ghost" size="sm" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" onClick={onConfirm}>
+          <Button variant="primary" size="sm" onClick={() => void onConfirm()}>
             Approve
           </Button>
         </div>

@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { SCENARIOS, getScenario } from "@/lib/scenarios";
 import type { SuggestedAction, ToneKey, HistoryEntry } from "@/lib/types";
-import type { AnalyzeResponse } from "@/lib/analyzeMessage";
-import { useHistory, useMemoryPreference } from "@/lib/useMoodPilot";
+import { hasCrisisFlag, type AnalyzeResponse } from "@/lib/analyzeMessage";
+import { useHistory, useLearnedPreferences, useMemoryPreference } from "@/lib/useMoodPilot";
 import { Card, CardEyebrow } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChannelBadge } from "@/components/ui/Badge";
@@ -16,6 +16,7 @@ import { ReplyStudio } from "./ReplyStudio";
 import { NextActions } from "./NextActions";
 import { ApprovalDialog } from "./ApprovalDialog";
 import { MemoryControl } from "./MemoryControl";
+import { CrisisHandoff } from "./CrisisHandoff";
 
 export function CompanionLoop() {
   const [activeId, setActiveId] = useState(SCENARIOS[0].id);
@@ -32,6 +33,7 @@ export function CompanionLoop() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { add: addHistory } = useHistory();
+  const { add: addLearnedPreference } = useLearnedPreferences();
   const { preference, setPreference } = useMemoryPreference();
 
   const canRemember = preference !== "never";
@@ -63,7 +65,6 @@ export function CompanionLoop() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: messageText,
-          context: scenario.context,
           preferredTone: tone,
         }),
       });
@@ -77,9 +78,9 @@ export function CompanionLoop() {
       setAnalyzed(true);
     } catch {
       setAnalysisResult(null);
-      setApiError("API unavailable — showing the curated scenario read.");
+      setApiError("Analysis is unavailable. Your message was not processed; please try again.");
       setAnalyzing(false);
-      setAnalyzed(true);
+      setAnalyzed(false);
       return;
     }
 
@@ -89,16 +90,21 @@ export function CompanionLoop() {
   const activeAnalysis = analysisResult?.analysis ?? scenario.analysis;
   const activeReplies = analysisResult?.replyDrafts ?? scenario.replies;
   const activeReply = activeReplies[tone];
+  const crisisDetected = analysisResult ? hasCrisisFlag(analysisResult) : false;
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     const action = pendingAction;
     setPendingAction(null);
     if (!action) return;
 
     switch (action.key) {
       case "reply": {
-        navigator.clipboard?.writeText(activeReply.text).catch(() => {});
-        flashToast("Draft copied — you send it yourself.");
+        try {
+          await navigator.clipboard.writeText(activeReply.text);
+          flashToast("Draft copied — you send it yourself.");
+        } catch {
+          flashToast("Copy was blocked — select the draft and copy it manually.");
+        }
         break;
       }
       case "save": {
@@ -113,6 +119,9 @@ export function CompanionLoop() {
           remembered: canRemember && rememberThis,
         };
         addHistory(entry);
+        if (canRemember && rememberThis) {
+          addLearnedPreference(`Prefers ${tone} replies`);
+        }
         flashToast(
           canRemember && rememberThis
             ? "Saved to History — context remembered."
@@ -159,10 +168,11 @@ export function CompanionLoop() {
             <p className="mb-3 text-xs leading-relaxed text-ink-soft">
               {scenario.context}
             </p>
-            <label className="mb-1.5 block text-xs font-medium text-ink-soft">
+            <label htmlFor="message-text" className="mb-1.5 block text-xs font-medium text-ink-soft">
               The message you received
             </label>
             <textarea
+              id="message-text"
               value={messageText}
               onChange={(e) => {
                 setMessageText(e.target.value);
@@ -172,7 +182,7 @@ export function CompanionLoop() {
               className="soft-scroll w-full resize-none rounded-3xl border border-lavender-100 bg-cream-50 p-4 text-sm leading-relaxed text-ink outline-none transition focus:border-lavender-300 focus:ring-2 focus:ring-lavender-200"
             />
             <p className="mt-2 text-xs text-ink-faint">
-              Edit freely — or paste your own message. Only the text here is used.
+              Edit freely — or paste your own message. Only this text is sent for analysis.
             </p>
             <div className="mt-4 flex items-center gap-3">
               <Button onClick={analyze} disabled={analyzing || !messageText.trim()}>
@@ -250,11 +260,15 @@ export function CompanionLoop() {
                   </div>
                 </Card>
               )}
-              <ReplyStudio replies={activeReplies} tone={tone} onToneChange={setTone} />
-              <NextActions actions={scenario.actions} onAction={setPendingAction} />
+              {crisisDetected ? (
+                <CrisisHandoff />
+              ) : (
+                <>
+                  <ReplyStudio replies={activeReplies} tone={tone} onToneChange={setTone} />
+                  <NextActions actions={scenario.actions} onAction={setPendingAction} />
 
               {/* Inline memory control */}
-              <Card>
+                  <Card>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardEyebrow>Memory preference</CardEyebrow>
                   <span className="text-xs text-ink-faint">{memoryHint}</span>
@@ -287,7 +301,9 @@ export function CompanionLoop() {
                     </span>
                   </label>
                 )}
-              </Card>
+                  </Card>
+                </>
+              )}
             </>
           )}
         </div>

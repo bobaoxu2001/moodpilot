@@ -4,13 +4,39 @@ import { useState } from "react";
 import { Card, CardEyebrow } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { MemoryControl } from "@/components/companion/MemoryControl";
-import { useHistory, useMemoryPreference } from "@/lib/useMoodPilot";
+import { useHistory, useLearnedPreferences, useMemoryPreference } from "@/lib/useMoodPilot";
 import { LEARNED_EXAMPLES, MEMORY_SETTINGS } from "@/lib/productContent";
 
 export default function MemoryPage() {
-  const { preference, setPreference } = useMemoryPreference();
-  const { clear } = useHistory();
-  const [learned, setLearned] = useState(LEARNED_EXAMPLES);
+  const { preference, setPreference, resetPreference } = useMemoryPreference();
+  const { reset: resetHistory } = useHistory();
+  const { learned, remove, reset: resetLearned } = useLearnedPreferences();
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const exportData = () => {
+    try {
+      const blob = new Blob([JSON.stringify({ preference, learned }, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "moodpilot-data.json";
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setNotice("Your local MoodPilot data was exported.");
+    } catch {
+      setNotice("Export failed. Please try again.");
+    }
+  };
+
+  const deleteEverything = () => {
+    if (!window.confirm("Delete all MoodPilot history, memory, and preferences from this browser?")) return;
+    resetHistory();
+    resetLearned();
+    resetPreference();
+    setNotice("All MoodPilot data was deleted from this browser.");
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -33,7 +59,7 @@ export default function MemoryPage() {
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardEyebrow>What MoodPilot has learned</CardEyebrow>
+          <CardEyebrow>Your saved preferences</CardEyebrow>
           <span className="text-xs text-ink-faint">{learned.length} preferences</span>
         </div>
         <div className="mt-3 space-y-2">
@@ -47,7 +73,7 @@ export default function MemoryPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLearned((prev) => prev.filter((value) => value !== item))}
+                onClick={() => remove(item)}
               >
                 Forget
               </Button>
@@ -55,10 +81,24 @@ export default function MemoryPage() {
           ))}
           {learned.length === 0 && (
             <p className="rounded-3xl bg-cream-50 p-5 text-center text-sm text-ink-faint">
-              Nothing stored. MoodPilot starts fresh every time.
+              Nothing saved yet. Opt in when saving a draft to add a preference here.
             </p>
           )}
         </div>
+      </Card>
+
+      <Card>
+        <CardEyebrow>Examples — not stored</CardEyebrow>
+        <p className="text-sm leading-relaxed text-ink-soft">
+          A production personalization system might learn preferences like these after explicit consent:
+        </p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {LEARNED_EXAMPLES.map((example) => (
+            <li key={example} className="rounded-2xl bg-cream-50 px-3 py-2 text-xs text-ink-soft">
+              {example}
+            </li>
+          ))}
+        </ul>
       </Card>
 
       <Card>
@@ -72,19 +112,21 @@ export default function MemoryPage() {
           ))}
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button variant="secondary" onClick={() => navigator.clipboard?.writeText(JSON.stringify({ preference, learned }, null, 2))}>
+          <Button variant="secondary" onClick={exportData}>
             Export my data
           </Button>
           <Button
             variant="ghost"
-            onClick={() => {
-              setLearned([]);
-              clear();
-            }}
+            onClick={deleteEverything}
           >
             Delete everything
           </Button>
         </div>
+        {notice && (
+          <p className="mt-3 text-xs font-medium text-ink-soft" role="status" aria-live="polite">
+            {notice}
+          </p>
+        )}
       </Card>
     </div>
   );
