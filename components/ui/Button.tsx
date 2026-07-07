@@ -49,6 +49,7 @@ export function Button({
 
 interface LinkButtonProps extends CommonProps {
   href: string;
+  external?: boolean;
 }
 
 export function LinkButton({
@@ -57,9 +58,15 @@ export function LinkButton({
   size = "md",
   className,
   children,
+  external = false,
 }: LinkButtonProps) {
   return (
-    <Link href={href} className={cn(base, variants[variant], sizes[size], className)}>
+    <Link
+      href={href}
+      className={cn(base, variants[variant], sizes[size], className)}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+    >
       {children}
     </Link>
   );

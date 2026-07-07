@@ -27,13 +27,13 @@ const CRISIS_TERMS = [
   "suicide",
   "suicidal",
   "self harm",
-  "harm myself",
-  "hurt myself",
   "end it all",
   "do not want to live",
   "don't want to live",
   "want to die",
 ];
+
+const CRISIS_CONTEXT_EXCLUSIONS = ["social suicide", "career suicide"];
 
 export function analyzeMessage({
   message,
@@ -41,7 +41,9 @@ export function analyzeMessage({
 }: AnalyzeRequest): AnalyzeResponse {
   const text = message.trim();
   const lower = text.toLowerCase().replace(/[‐‑‒–—-]/g, " ").replace(/\s+/g, " ");
-  const crisis = CRISIS_TERMS.some((term) => lower.includes(term));
+  const crisis =
+    !CRISIS_CONTEXT_EXCLUSIONS.some((phrase) => lower.includes(phrase)) &&
+    CRISIS_TERMS.some((term) => lower.includes(term));
   const profile = chooseProfile(lower);
 
   const safety_flags = [
@@ -104,7 +106,11 @@ function chooseProfile(lower: string) {
 }
 
 function includesAny(text: string, terms: string[]) {
-  return terms.some((term) => text.includes(term));
+  return terms.some((term) => {
+    if (term.includes(" ")) return text.includes(term);
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`\\b${escaped}\\b`).test(text);
+  });
 }
 
 const workplaceProfile = {

@@ -1,5 +1,9 @@
 # MoodPilot
 
+[![Quality checks](https://github.com/bobaoxu2001/moodpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/bobaoxu2001/moodpilot/actions/workflows/ci.yml)
+
+**[Try the companion locally](#run-locally) · [Read the case study](https://github.com/bobaoxu2001/moodpilot/tree/main/app/case-study) · [Inspect the behavioral evals](./evals/README.md)**
+
 MoodPilot is a consumer AI communication companion for emotionally loaded messages.
 It helps users understand the subtext of a hard message, clarify what they want to
 achieve, and draft replies in a tone they choose.
@@ -61,6 +65,16 @@ claiming production model quality. A production version would replace the local
 engine with a model call, evaluation set, safety classifier, and logging/redaction
 policy.
 
+## Proof at a Glance
+
+| Claim | Inspectable proof |
+| --- | --- |
+| The UI consumes a structured analysis contract | [`app/api/analyze/route.ts`](./app/api/analyze/route.ts) and [`components/companion/CompanionLoop.tsx`](./components/companion/CompanionLoop.tsx) |
+| Crisis language exits the drafting flow | [`components/companion/CrisisHandoff.tsx`](./components/companion/CrisisHandoff.tsx) and behavioral evals |
+| Memory requires consent and stays local | [`lib/useMoodPilot.ts`](./lib/useMoodPilot.ts) and the Memory & privacy route |
+| Normal, error, validation, and safety behavior is tested | 30 automated tests across unit, API-contract, and behavioral-evaluation suites |
+| Every change is build-checked | GitHub Actions runs tests, ESLint, the production build, and a high-severity production audit |
+
 ## Demo Steps
 
 1. Open the Overview page and start with **Try the live demo**.
@@ -86,7 +100,7 @@ policy.
 - Reminder and follow-up actions are simulated in UI toast states.
 - Memory is local demo state, not a synced account or production personalization store.
 - Scenario content is hand-authored to demonstrate the intended AI response shape.
-- Portfolio project links for sibling projects are local workspace references, not embedded deployments.
+- Sibling portfolio projects link to their public GitHub repositories; this repository does not claim they are embedded deployments.
 
 ## Routes
 
@@ -111,8 +125,15 @@ Then open `http://localhost:3000`.
 ## Validate
 
 ```bash
-npm run build
+npm run check
+npm run test:eval
+npm audit --omit=dev --audit-level=high
 ```
+
+The current production dependency audit has no high or critical findings. Two moderate
+PostCSS advisories remain inside Next.js's bundled dependency tree; `npm audit` proposes
+an unsafe downgrade rather than a valid patched upgrade, so they are disclosed rather
+than silently "fixed."
 
 ## Design Source
 

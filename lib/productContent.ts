@@ -64,7 +64,7 @@ export const PORTFOLIO_PROJECTS = [
       "Closest match for emotional AI: hard-message companion with tone control, opt-in memory, safety boundaries, and a live structured analysis API.",
     proof:
       "Shows consumer AI taste, human-AI interaction design, trust UX, and product/engineering translation.",
-    href: "/case-study",
+    href: "https://github.com/bobaoxu2001/moodpilot",
   },
   {
     name: "Fuck Your Unhappy",
@@ -73,8 +73,7 @@ export const PORTFOLIO_PROJECTS = [
       "Fast, playful emotional release loop: vent -> generated stress monster -> safe cartoon interaction -> shareable summary.",
     proof:
       "Shows consumer entertainment instincts, emotional-state transformation, mobile-first flow, and safety fallback thinking.",
-    href:
-      "/Users/xuao/Documents/2025 找工作/AI Projects/FUck_your_unhappy/fuck-your-unhappy",
+    href: "https://github.com/bobaoxu2001/fuck-your-unhappy",
   },
   {
     name: "CraveMap",
@@ -83,7 +82,7 @@ export const PORTFOLIO_PROJECTS = [
       "Consumer personalization product with taste passport, mood/budget matching, restaurant Studio, and AI content generation.",
     proof:
       "Shows marketplace thinking, recommendation UX, onboarding, trust/compliance notes, and design-to-engineering execution.",
-    href: "/Users/xuao/Documents/2025 找工作/AI Projects/cravemap",
+    href: "https://github.com/bobaoxu2001/cravemap",
   },
 ];
 

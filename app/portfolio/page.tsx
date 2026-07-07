@@ -41,6 +41,9 @@ export default function PortfolioPage() {
                   <span className="font-semibold text-ink">Why it matters: </span>
                   {project.proof}
                 </p>
+                <LinkButton href={project.href} external variant="soft" size="sm">
+                  View project source ↗
+                </LinkButton>
               </div>
             </div>
           </Card>
